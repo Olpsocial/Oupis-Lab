@@ -7,24 +7,29 @@ export async function POST(req: Request) {
 
         // Gọi đến Ngrok từ phía Server (Bỏ qua lỗi CORS của trình duyệt)
         const response = await fetch(`${NGROK_URL}/api/generate`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-                'Content-Type': 'application/json',
-                'ngrok-skip-browser-warning': 'true' // Vượt rào Ngrok warning
+                "Content-Type": "application/json",
+                "ngrok-skip-browser-warning": "true", // Bỏ qua trang cảnh báo của Ngrok
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" // Giả danh trình duyệt thật
             },
             body: JSON.stringify({
-                model: "deepseek-r1:8b",
+                model: "deepseek-r1:8b", // Model mặc định
                 prompt: body.prompt,
-                stream: false,
                 system: body.system,
+                stream: false,
                 options: body.options
-            })
+            }),
         });
 
         if (!response.ok) {
             const errorText = await response.text();
             console.error("AI Proxy Error:", response.status, errorText);
-            return NextResponse.json({ error: "Lỗi kết nối từ Server đến AI" }, { status: 500 });
+            // Trả về lỗi chi tiết để debug ở Client
+            return NextResponse.json({
+                error: `Upstream Error ${response.status}: ${errorText.substring(0, 200)}...`,
+                fullError: errorText
+            }, { status: 500 });
         }
 
         const data = await response.json();

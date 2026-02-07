@@ -19,7 +19,8 @@ import {
     MapPin,
     Loader2,
     ZoomIn,
-    X as CloseIcon
+    X as CloseIcon,
+    MessagesSquare
 } from "lucide-react";
 import Header from "../../components/header";
 import { products as mockProducts } from "@/data/mock-products";
@@ -368,6 +369,28 @@ export default function ProductDetailPage() {
                                 <div className="flex gap-3 pt-4">
                                     <button onClick={handleBuyNowDecor} className="flex-1 text-white font-bold py-3.5 rounded-xl shadow-lg bg-[#B45309] hover:brightness-110 active:scale-95 transition-all">MUA NGAY</button>
                                     <button onClick={handleAddDecorToCart} className="flex-1 bg-white border-2 border-brand-terracotta text-brand-terracotta font-bold py-3.5 rounded-xl hover:bg-orange-50 transition-all">THÊM GIỎ</button>
+                                </div>
+
+                                {/* AI Chat Trigger */}
+                                <div className="mt-4 text-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const event = new CustomEvent("open-ai-chat", {
+                                                detail: {
+                                                    product: {
+                                                        name: productDetails.name,
+                                                        price: Number(productDetails.price || 0) + sizeExtraPrice
+                                                    }
+                                                }
+                                            });
+                                            window.dispatchEvent(event);
+                                        }}
+                                        className="text-sm font-medium text-brand-terracotta/80 hover:text-brand-terracotta underline decoration-dotted decoration-brand-terracotta/50 underline-offset-4 flex items-center justify-center gap-2 mx-auto transition-colors"
+                                    >
+                                        <MessagesSquare size={16} />
+                                        Cần tư vấn thêm về sản phẩm này?
+                                    </button>
                                 </div>
                             </div>
                         )}

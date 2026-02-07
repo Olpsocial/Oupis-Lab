@@ -8,6 +8,7 @@ import { askKimHuongAI } from "../../services/aiService";
 interface ChatDrawerProps {
     isOpen: boolean;
     onClose: () => void;
+    context?: any;
 }
 
 interface Message {
@@ -16,7 +17,7 @@ interface Message {
     action?: "map";
 }
 
-export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
+export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps) {
     const [messages, setMessages] = useState<Message[]>([
         { role: "assistant", content: "Chào bạn! Nhà Kim Hương có thể giúp gì cho bạn hôm nay?" }
     ]);
@@ -30,6 +31,19 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [messages]);
+
+    // Tự động hỏi khi có ngữ cảnh sản phẩm
+    useEffect(() => {
+        if (isOpen && context) {
+            // Chỉ gửi nếu tin nhắn cuối cùng không phải là tin này (tránh duplicate)
+            const msg = `Mình đang xem sản phẩm: ${context.name}. Tư vấn giúp mình nhé!`;
+            // Kiểm tra xem đã gửi chưa
+            const lastMsg = messages[messages.length - 1];
+            if (lastMsg?.content !== msg) {
+                handleSend(msg);
+            }
+        }
+    }, [isOpen, context]);
 
     const handleSend = async (text: string = input) => {
         if (!text.trim()) return;

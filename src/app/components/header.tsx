@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingCart, Info, User, LogOut, MapPin, MessagesSquare } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StoryModal from "./story-modal";
 import TopBar from "./TopBar";
 import ChatDrawer from "./chat-drawer";
@@ -14,7 +14,20 @@ export default function Header() {
   const { cartCount, user, logout } = useCart();
   const [isStoryOpen, setIsStoryOpen] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatContext, setChatContext] = useState<any>(null);
   const pathname = usePathname();
+
+  // Listen for global event to open chat
+  useEffect(() => {
+    const handleOpenChat = (e: any) => {
+      if (e.detail?.product) {
+        setChatContext(e.detail.product);
+      }
+      setIsChatOpen(true);
+    };
+    window.addEventListener("open-ai-chat", handleOpenChat);
+    return () => window.removeEventListener("open-ai-chat", handleOpenChat);
+  }, []);
 
   const navItems = [
     { name: "Trang chủ", href: "/" },
@@ -188,7 +201,7 @@ export default function Header() {
         </div>
       </div>
       <StoryModal isOpen={isStoryOpen} onClose={() => setIsStoryOpen(false)} />
-      <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+      <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} context={chatContext} />
     </header>
   );
 }
