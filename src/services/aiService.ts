@@ -114,9 +114,9 @@ ${productListText}
                 prompt: userQuestion,
                 system: DYNAMIC_SYSTEM_PROMPT,
                 options: {
-                    temperature: 0.5, // Giảm độ sáng tạo để AI báo giá chuẩn hơn
+                    temperature: 0.5,
                     top_k: 40,
-                    num_predict: 300 // Giới hạn độ dài câu trả lời để giảm tải cho Dell 7750
+                    num_predict: 800 // Tăng lên để không bị cắt giữa chừng
                 }
             }),
         });
@@ -132,8 +132,17 @@ ${productListText}
         const rawText = data.response;
 
         // --- THUẬT TOÁN CẮT BỎ SUY NGHĨ (LOBOTOMY) ---
-        // DeepSeek-R1 hay lảm nhảm trong thẻ <think>. Cần cắt bỏ để khách không thấy.
-        const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+        // 1. Xóa nội dung trong thẻ <think>...</think>
+        let cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+        // 2. Xóa thẻ <think> treo nếu chưa đóng (do bị cắt token)
+        cleanText = cleanText.replace(/<think>[\s\S]*/g, "").trim();
+
+        // 3. Xóa các ký tự rác ở đầu câu (đôi khi model bị "nấc")
+        cleanText = cleanText.replace(/^(cấn|ờ|à|ừm)\s*/i, "");
+
+        // 4. Nếu vẫn còn sót thẻ style, markdown lỗi -> dọn dẹp nhẹ
+        // (Hiện tại giữ nguyên markdown để hiển thị đẹp)
 
         // 6. LƯU VÀO CACHE (Để dùng lại lần sau)
         CACHE.set(questionLower, cleanText);
