@@ -301,7 +301,6 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                         {isLoading && (
                                             <div className="flex justify-start">
                                                 <div className="bg-white border border-orange-100 p-3 rounded-2xl rounded-tl-none shadow-sm flex gap-1 items-center">
-                                                    <span className="text-xs text-stone-400 mr-2">Em đang soạn tin</span>
                                                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" />
                                                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce delay-100" />
                                                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce delay-200" />
