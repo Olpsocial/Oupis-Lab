@@ -80,18 +80,41 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [sessionId, setSessionId] = useState("");
+    const supabase = createClient();
 
-    // Initialize Session ID
+    // Initialize Session ID & Load History
     useEffect(() => {
         let sid = localStorage.getItem("chat_session_id");
         if (!sid) {
             sid = crypto.randomUUID();
             localStorage.setItem("chat_session_id", sid);
         }
-        setSessionId(sid);
-    }, []);
+        setSessionId(sid || ""); // Fallback to empty string if null, though logic above prevents it
 
-    const supabase = createClient();
+        // Load History
+        const loadHistory = async () => {
+            if (!sid) return;
+            const { data } = await supabase
+                .from("chat_history")
+                .select("role, content")
+                .eq("session_id", sid)
+                .order("created_at", { ascending: true });
+
+            if (data && data.length > 0) {
+                // Map Supabase data to Message format
+                const history: Message[] = data.map((msg: any) => ({
+                    role: msg.role,
+                    content: msg.content
+                }));
+
+                setMessages([
+                    { role: "assistant", content: "Chào bạn! Nhà Kim Hương có thể giúp gì cho bạn hôm nay?" },
+                    ...history
+                ]);
+            }
+        };
+        loadHistory();
+    }, []);
 
     const saveMessage = async (role: "user" | "assistant", content: string) => {
         if (!sessionId) return;
