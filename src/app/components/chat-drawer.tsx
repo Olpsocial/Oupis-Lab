@@ -337,7 +337,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                                     <MarkdownMessage content={msg.content} role={msg.role} />
                                                     {msg.action === 'map' && (
                                                         <a
-                                                            href="https://www.google.com/maps/search/?api=1&query=246+Tân+Hương,+Tân+Quý,+Tân+Phú"
+                                                            href="https://maps.app.goo.gl/QqR3S7pRhxwMRHFA7"
                                                             target="_blank"
                                                             rel="noopener noreferrer"
                                                             className="mt-2 flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-700 p-2 rounded-lg text-xs font-bold transition-colors"

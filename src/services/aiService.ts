@@ -22,8 +22,8 @@ interface OllamaResponse {
 // --- TỐI ƯU HIỆU SUẤT (CACHE & KEYWORD) ---
 const CACHE = new Map<string, string>();
 const QUICK_ANSWERS: Record<string, string> = {
-    "địa chỉ": "### ĐỊA CHỈ TIỆM NHÀ KIM HƯƠNG:\n- **246 Tân Hương, Tân Quý, Tân Phú, TP.HCM**\n- Mời bạn ghé xem trực tiếp nhé! (Mở cửa: 8h00 - 21h00) [SHOW_MAP]",
-    "ở đâu": "### ĐỊA CHỈ TIỆM NHÀ KIM HƯƠNG:\n- **246 Tân Hương, Tân Quý, Tân Phú, TP.HCM**\n- Mời bạn ghé xem trực tiếp nhé! (Mở cửa: 8h00 - 21h00) [SHOW_MAP]",
+    "địa chỉ": "### ĐỊA CHỈ TIỆM NHÀ KIM HƯƠNG:\n- **246 Tân Hương, Tân Quý, Tân Phú, TP.HCM**\n- Mời bạn ghé xem trực tiếp nhé! (Mở cửa: 7h00 - 23h00) [SHOW_MAP]",
+    "ở đâu": "### ĐỊA CHỈ TIỆM NHÀ KIM HƯƠNG:\n- **246 Tân Hương, Tân Quý, Tân Phú, TP.HCM**\n- Mời bạn ghé xem trực tiếp nhé! (Mở cửa: 7h00 - 23h00) [SHOW_MAP]",
     "số điện thoại": "### HOTLINE LIÊN HỆ:\n- **0938.123.456** (Có Zalo)\n- Bạn có thể gọi hoặc nhắn tin Zalo để được tư vấn nhanh nhất ạ!",
     "hotline": "### HOTLINE LIÊN HỆ:\n- **0938.123.456** (Có Zalo)\n- Bạn có thể gọi hoặc nhắn tin Zalo để được tư vấn nhanh nhất ạ!",
     "zalo": "### KẾT BẠN ZALO:\n- **0938.123.456** (Nhà Kim Hương)\n- Gửi ảnh mẫu qua Zalo để tiệm báo giá chi tiết nha!",
@@ -85,6 +85,9 @@ NGÔN NGỮ: Chỉ sử dụng tiếng Việt hoàn chỉnh. TUYỆT ĐỐI khô
 NHIỆM VỤ:
 - Tư vấn sản phẩm và báo giá chính xác theo danh sách bên dưới.
 - Nếu khách hỏi món không có, gợi ý mẫu tương tự hoặc mời ghé tiệm.
+- **THÔNG TIN TIỆM**: 
+  - Địa chỉ: **246 Tân Hương, Tân Quý, Tân Phú (7h00 - 23h00)**. 
+  - Link Maps: https://maps.app.goo.gl/QqR3S7pRhxwMRHFA7
 - **QUAN TRỌNG (ĐẶT LÀM RIÊNG/CUSTOM)**:
   1. Hỏi khách có **hình ảnh, video hoặc ý tưởng** không.
   2. Lưu ý khách: **"Vì sản phẩm làm thủ công (handmade) 100% nên sẽ có nét riêng, có thể không giống tuyệt đối như mẫu khách đưa"**
