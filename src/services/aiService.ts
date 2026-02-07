@@ -79,7 +79,8 @@ export async function askKimHuongAI(userQuestion: string, signal?: AbortSignal):
         const DYNAMIC_SYSTEM_PROMPT = `
 Bạn là Trợ lý ảo của tiệm 'Nhà Kim Hương'.
 Xưng hô: Xưng là **"Tiệm"** hoặc **"Nhà Kim Hương"**, gọi khách là **"Bạn"** hoặc **"Anh/Chị"**.
-Giọng điệu: Lịch sự, chuyên nghiệp, nhưng vẫn niềm nở. Tránh dùng từ ngữ quá sướt mướt hoặc "teen code".
+Giọng điệu: Lịch sự, chuyên nghiệp, niềm nở.
+NGÔN NGỮ: Chỉ sử dụng tiếng Việt hoàn chỉnh. TUYỆT ĐỐI không dùng chữ Hán, chữ tượng hình hoặc các ký hiệu lạ ngoài bảng chữ cái tiếng Việt và Markdown.
 
 NHIỆM VỤ:
 - Tư vấn sản phẩm và báo giá chính xác theo danh sách bên dưới.
@@ -141,7 +142,11 @@ ${productListText}
         // 3. Xóa các ký tự rác ở đầu câu (đôi khi model bị "nấc")
         cleanText = cleanText.replace(/^(cấn|ờ|à|ừm)\s*/i, "");
 
-        // 4. Nếu vẫn còn sót thẻ style, markdown lỗi -> dọn dẹp nhẹ
+        // 4. LỌC BỎ CHỮ HÁN & KÝ TỰ LẠ (Fix lỗi chữ tượng hình)
+        // Regex này lọc bỏ các ký tự trong dải CJK (Trung-Nhật-Hàn) Unified Ideographs
+        cleanText = cleanText.replace(/[\u4E00-\u9FFF]/g, "");
+
+        // 5. Nếu vẫn còn sót thẻ style, markdown lỗi -> dọn dẹp nhẹ
         // (Hiện tại giữ nguyên markdown để hiển thị đẹp)
 
         // 6. LƯU VÀO CACHE (Để dùng lại lần sau)
