@@ -72,15 +72,16 @@ const MarkdownMessage = ({ content, role }: { content: string, role: "user" | "a
     );
 };
 
-export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps) {
+export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     const [messages, setMessages] = useState<Message[]>([
-        { role: "assistant", content: "Chào bạn! Nhà Kim Hương có thể giúp gì cho bạn hôm nay?" }
+        { role: "assistant", content: "Chào bạn! **Em Kim Hương** có thể giúp gì cho bạn hôm nay?" }
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [sessionId, setSessionId] = useState("");
     const supabase = createClient();
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     // Initialize Session ID & Load History
     useEffect(() => {
@@ -89,9 +90,8 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
             sid = crypto.randomUUID();
             localStorage.setItem("chat_session_id", sid);
         }
-        setSessionId(sid || ""); // Fallback to empty string if null, though logic above prevents it
+        setSessionId(sid || "");
 
-        // Load History
         const loadHistory = async () => {
             if (!sid) return;
             const { data } = await supabase
@@ -101,14 +101,12 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
                 .order("created_at", { ascending: true });
 
             if (data && data.length > 0) {
-                // Map Supabase data to Message format
                 const history: Message[] = data.map((msg: any) => ({
                     role: msg.role,
                     content: msg.content
                 }));
-
                 setMessages([
-                    { role: "assistant", content: "Chào bạn! Nhà Kim Hương có thể giúp gì cho bạn hôm nay?" },
+                    { role: "assistant", content: "Chào bạn! **Em Kim Hương** có thể giúp gì cho bạn hôm nay?" },
                     ...history
                 ]);
             }
@@ -119,57 +117,57 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
     const saveMessage = async (role: "user" | "assistant", content: string) => {
         if (!sessionId) return;
         try {
-            await supabase.from("chat_history").insert({
-                session_id: sessionId,
-                role,
-                content
-            });
+            await supabase.from("chat_history").insert({ session_id: sessionId, role, content });
         } catch (e) {
             console.error("Lỗi lưu chat:", e);
         }
     };
 
-    // Auto-scroll to bottom
-    // ... (existing auto-scroll logic)
+    // Auto-scroll
+    useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [messages, isLoading]);
 
-    // Tự động hỏi khi có ngữ cảnh sản phẩm
-    // ... (existing context logic)
+    // Auto-resize Textarea
+    useEffect(() => {
+        if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+        }
+    }, [input]);
 
-    const handleSend = async (text: string = input) => {
+    const handleSend = async () => {
+        const text = input;
         if (!text.trim()) return;
 
-        // Add user message
         const userMsg: Message = { role: "user", content: text };
         setMessages(prev => [...prev, userMsg]);
         setInput("");
         setIsLoading(true);
+        if (textareaRef.current) textareaRef.current.style.height = "auto"; // Reset height
 
-        // Save User Message
         saveMessage("user", text);
 
         try {
-            // Gọi AI DeepSeek qua Ngrok
             const aiReply = await askKimHuongAI(text);
-
-            // Save AI Message
             saveMessage("assistant", aiReply);
 
-            // Xử lý logic hiển thị map nếu AI trả về (giữ lại tính năng cũ nếu có)
             let content = aiReply;
             let action: "map" | undefined = undefined;
 
-            // Nếu AI thông minh tự trả về [SHOW_MAP], ta vẫn hứng được
             if (content.includes("[SHOW_MAP]")) {
                 action = "map";
                 content = content.replace("[SHOW_MAP]", "").trim();
             }
 
-            setMessages(prev => [...prev, { role: "assistant", content, action }]); // Update UI
+            setMessages(prev => [...prev, { role: "assistant", content, action }]);
         } catch (error: any) {
             console.error("Chat error:", error);
             const errorMsg = "Dạ hiện tại em đang bị mất kết nối với 'Tổng đài'. Khách chờ xíu hoặc nhắn Zalo giúp em nha!";
             setMessages(prev => [...prev, { role: "assistant", content: errorMsg }]);
-            saveMessage("assistant", errorMsg); // Save error message
+            saveMessage("assistant", errorMsg);
         } finally {
             setIsLoading(false);
         }
@@ -182,7 +180,47 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
             "Quà tặng": "Shop có set quà tặng nào đẹp không?",
             "Custom": "Mình muốn đặt làm riêng theo yêu cầu"
         };
-        handleSend(queryMap[tag] || tag);
+        const text = queryMap[tag] || tag;
+
+        // Simulating send for quick actions
+        const userMsg: Message = { role: "user", content: text };
+        setMessages(prev => [...prev, userMsg]);
+        setIsLoading(true);
+        saveMessage("user", text);
+
+        // Call API logic duplicated here to reuse handleSend logic slightly refactored would be better but keeping it simple for now
+        // actually let's re-use handleSend but we need to modify handleSend to accept arg or use state.
+        // Let's refactor handleSend to accept text argument?
+        // The previous implementation had `handleSend(text)` but current one uses state `input`.
+        // Let's defer to a shared internal function.
+
+        (async () => {
+            try {
+                const aiReply = await askKimHuongAI(text);
+                saveMessage("assistant", aiReply);
+                let content = aiReply;
+                let action: "map" | undefined = undefined;
+                if (content.includes("[SHOW_MAP]")) {
+                    action = "map";
+                    content = content.replace("[SHOW_MAP]", "").trim();
+                }
+                setMessages(prev => [...prev, { role: "assistant", content, action }]);
+            } catch (error: any) {
+                const errorMsg = "Dạ hiện tại em đang bị mất kết nối. Khách nhắn Zalo giúp em nha!";
+                setMessages(prev => [...prev, { role: "assistant", content: errorMsg }]);
+                saveMessage("assistant", errorMsg);
+            } finally {
+                setIsLoading(false);
+            }
+        })();
+    };
+
+    // Allow Enter to submit, Shift+Enter for new line
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
     };
 
     return (
@@ -211,30 +249,26 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
                             leaveFrom="translate-y-0"
                             leaveTo="translate-y-full"
                         >
-                            <Dialog.Panel className="relative transform overflow-hidden rounded-t-3xl bg-[#FDFBF7] text-left shadow-2xl transition-all w-full max-w-lg h-[80vh] sm:h-[600px] sm:rounded-2xl sm:p-4 border-t-4 border-orange-500 flex flex-col">
+                            <Dialog.Panel className="relative transform overflow-hidden rounded-t-3xl bg-[#FDFBF7] text-left shadow-2xl transition-all w-full max-w-lg h-[90vh] sm:h-[650px] sm:rounded-2xl border-t-4 border-orange-500 flex flex-col">
                                 <div className="flex flex-col h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-fixed">
-                                    {/* Handle bar */}
-                                    <div className="flex justify-center pt-3 pb-1 sm:hidden w-full" onClick={onClose}>
-                                        <div className="w-12 h-1.5 rounded-full bg-stone-300" />
-                                    </div>
 
                                     {/* Header */}
-                                    <div className="px-4 pb-2 flex justify-between items-center sm:pt-2 pt-1 border-b border-orange-100">
-                                        <div className="flex items-center gap-2">
-                                            <div className="p-1.5 bg-orange-100 rounded-full text-orange-600">
-                                                <Sparkles className="w-5 h-5" />
+                                    <div className="px-4 py-3 flex justify-between items-center border-b border-orange-100 bg-[#FDFBF7]/90 backdrop-blur-sm shrink-0">
+                                        <div className="flex items-center gap-3">
+                                            <div className="relative">
+                                                <div className="p-2 bg-orange-100 rounded-full text-orange-600">
+                                                    <Sparkles className="w-5 h-5" />
+                                                </div>
+                                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
                                             </div>
                                             <div>
-                                                <h3 className="text-lg font-bold text-brand-brown font-serif">Trợ Lý Decor</h3>
-                                                <p className="text-[10px] text-brand-terracotta flex items-center gap-1">
-                                                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                                                    Online | Powered by Gemini
-                                                </p>
+                                                <h3 className="text-lg font-bold text-brand-brown font-serif leading-none">Trợ Lý Decor</h3>
+                                                <p className="text-xs text-brand-terracotta mt-1">Em Kim Hương (AI) đang online</p>
                                             </div>
                                         </div>
                                         <button
                                             type="button"
-                                            className="rounded-full p-1 text-stone-400 hover:bg-stone-100 transition-colors"
+                                            className="rounded-full p-2 text-stone-400 hover:bg-stone-100 transition-colors"
                                             onClick={onClose}
                                         >
                                             <X className="h-6 w-6" aria-hidden="true" />
@@ -242,29 +276,14 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
                                     </div>
 
                                     {/* Chat Area */}
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
-                                        {/* Contact Cards (Always at top or maybe just part of flow? Let's keep them handy) */}
-                                        <div className="grid grid-cols-2 gap-2 mb-4">
-                                            <a href="#" onClick={(e) => e.preventDefault()}
-                                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors text-xs font-bold gap-1 cursor-default">
-                                                <MessageCircle className="w-5 h-5" />
-                                                Chat Zalo
-                                            </a>
-                                            <a href="#" onClick={(e) => e.preventDefault()}
-                                                className="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors text-xs font-bold gap-1 cursor-default">
-                                                <Phone className="w-5 h-5" />
-                                                Gọi Hotline
-                                            </a>
-                                        </div>
-
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth" ref={scrollRef}>
                                         {messages.map((msg, idx) => (
                                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user'
+                                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
                                                     ? 'bg-orange-500 text-white rounded-tr-none'
-                                                    : 'bg-white border border-orange-100 text-stone-700 rounded-tl-none shadow-sm'
+                                                    : 'bg-white border border-orange-100 text-stone-700 rounded-tl-none'
                                                     }`}>
                                                     <MarkdownMessage content={msg.content} role={msg.role} />
-
                                                     {msg.action === 'map' && (
                                                         <a
                                                             href="https://www.google.com/maps/search/?api=1&query=246+Tân+Hương,+Tân+Quý,+Tân+Phú"
@@ -279,54 +298,70 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
                                                 </div>
                                             </div>
                                         ))}
-
                                         {isLoading && (
                                             <div className="flex justify-start">
-                                                <div className="bg-white border border-orange-100 p-3 rounded-2xl rounded-tl-none shadow-sm">
-                                                    <div className="flex gap-1">
-                                                        <span className="w-2 h-2 bg-orange-400 rounded-full animate-bounce" />
-                                                        <span className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-100" />
-                                                        <span className="w-2 h-2 bg-orange-400 rounded-full animate-bounce delay-200" />
-                                                    </div>
+                                                <div className="bg-white border border-orange-100 p-3 rounded-2xl rounded-tl-none shadow-sm flex gap-1 items-center">
+                                                    <span className="text-xs text-stone-400 mr-2">Em đang soạn tin</span>
+                                                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" />
+                                                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce delay-100" />
+                                                    <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce delay-200" />
                                                 </div>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Input Area */}
-                                    <div className="p-3 bg-white border-t border-orange-50">
-                                        {/* Suggestions */}
-                                        <div className="flex gap-2 mb-3 overflow-x-auto pb-1 scrollbar-hide">
+                                    {/* Sticky Footer: Suggestions, Contact & Input */}
+                                    <div className="bg-white border-t border-orange-50 shrink-0">
+
+                                        {/* Quick Actions (Suggestions) */}
+                                        <div className="px-3 py-2 flex gap-2 overflow-x-auto scrollbar-hide border-b border-orange-50/50">
                                             {["Địa chỉ shop", "Mẹt Tết", "Quà tặng", "Custom"].map(tag => (
                                                 <button
                                                     key={tag}
                                                     onClick={() => handleQuickAsk(tag)}
-                                                    className="px-3 py-1 bg-orange-50 text-orange-700 text-xs rounded-full border border-orange-100 whitespace-nowrap hover:bg-orange-100"
+                                                    className="px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-full border border-orange-100 whitespace-nowrap hover:bg-orange-100 transition-colors"
                                                 >
                                                     {tag}
                                                 </button>
                                             ))}
                                         </div>
 
-                                        <form
-                                            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                                            className="flex gap-2"
-                                        >
-                                            <input
-                                                type="text"
-                                                value={input}
-                                                onChange={(e) => setInput(e.target.value)}
-                                                placeholder="Nhập câu hỏi..."
-                                                className="flex-1 bg-stone-50 border border-stone-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                                            />
-                                            <button
-                                                type="submit"
-                                                disabled={isLoading || !input.trim()}
-                                                className="p-2 bg-orange-600 text-white rounded-xl shadow-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                            >
-                                                <Send className="w-5 h-5" />
-                                            </button>
-                                        </form>
+                                        {/* Contact Buttons (Sticky) */}
+                                        <div className="grid grid-cols-2 gap-3 px-3 py-2">
+                                            <a href="https://zalo.me/0938123456" target="_blank" rel="noreferrer" // Replace with real Zalo link
+                                                className="flex items-center justify-center p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 hover:bg-blue-100 transition-colors text-xs font-bold gap-2">
+                                                <MessageCircle className="w-4 h-4" />
+                                                Chat Zalo
+                                            </a>
+                                            <a href="tel:0938123456" // Replace with real Hotline
+                                                className="flex items-center justify-center p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 transition-colors text-xs font-bold gap-2">
+                                                <Phone className="w-4 h-4" />
+                                                Gọi Hotline
+                                            </a>
+                                        </div>
+
+                                        {/* Input Area */}
+                                        <div className="p-3 pt-1">
+                                            <div className="flex gap-2 items-end bg-stone-50 border border-stone-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-orange-500/50 focus-within:border-orange-500 transition-all">
+                                                <textarea
+                                                    ref={textareaRef}
+                                                    value={input}
+                                                    onChange={(e) => setInput(e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    placeholder="Nhập câu hỏi... (Shift+Enter xuống dòng)"
+                                                    rows={1}
+                                                    className="flex-1 bg-transparent border-none text-sm resize-none focus:ring-0 px-2 py-1 max-h-32 text-stone-800 placeholder-stone-400"
+                                                    style={{ minHeight: '24px' }}
+                                                />
+                                                <button
+                                                    onClick={handleSend}
+                                                    disabled={isLoading || !input.trim()}
+                                                    className="p-2 bg-orange-600 text-white rounded-xl shadow-sm hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+                                                >
+                                                    <Send className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </Dialog.Panel>
