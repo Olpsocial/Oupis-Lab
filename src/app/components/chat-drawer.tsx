@@ -17,6 +17,43 @@ interface Message {
     action?: "map";
 }
 
+// Helper Component to render basic Markdown (Bold & List)
+const MarkdownMessage = ({ content, role }: { content: string, role: "user" | "assistant" }) => {
+    return (
+        <div className="space-y-1">
+            {content.split('\n').map((line, idx) => {
+                // Check list item
+                const isList = line.trim().startsWith('-');
+                const cleanLine = isList ? line.trim().substring(1).trim() : line;
+
+                // Parse bold: **text**
+                const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+
+                const renderedParts = parts.map((part, pIdx) => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                        // Remove ** and wrap in strong
+                        return <strong key={pIdx} className={role === 'assistant' ? "font-bold text-brand-brown" : "font-bold"}>{part.slice(2, -2)}</strong>;
+                    }
+                    return part;
+                });
+
+                if (isList) {
+                    return (
+                        <div key={idx} className="flex gap-2 items-start pl-1">
+                            <span className={`mt-2 w-1.5 h-1.5 rounded-full shrink-0 ${role === 'assistant' ? 'bg-brand-terracotta' : 'bg-white'}`}></span>
+                            <span className="flex-1 leading-relaxed text-sm">{renderedParts}</span>
+                        </div>
+                    );
+                }
+
+                if (!line.trim()) return <div key={idx} className="h-1"></div>;
+
+                return <p key={idx} className="leading-relaxed text-sm">{renderedParts}</p>;
+            })}
+        </div>
+    );
+};
+
 export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps) {
     const [messages, setMessages] = useState<Message[]>([
         { role: "assistant", content: "Chào bạn! Nhà Kim Hương có thể giúp gì cho bạn hôm nay?" }
@@ -165,7 +202,7 @@ export default function ChatDrawer({ isOpen, onClose, context }: ChatDrawerProps
                                                     ? 'bg-orange-500 text-white rounded-tr-none'
                                                     : 'bg-white border border-orange-100 text-stone-700 rounded-tl-none shadow-sm'
                                                     }`}>
-                                                    <p>{msg.content}</p>
+                                                    <MarkdownMessage content={msg.content} role={msg.role} />
 
                                                     {msg.action === 'map' && (
                                                         <a
