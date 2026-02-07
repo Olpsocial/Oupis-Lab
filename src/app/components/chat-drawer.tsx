@@ -316,19 +316,21 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                     {/* Chat Area */}
                                     <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 scroll-smooth" ref={scrollRef}>
                                         {messages.map((msg, idx) => (
-                                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end items-end gap-2' : 'justify-start'}`}>
-                                                {/* Edit Button for User Message (Only for the last message & while loading) */}
+                                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end items-start gap-2' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+
+                                                {/* Edit/Stop Button (Only for last user message while loading) */}
                                                 {isLoading && msg.role === 'user' && idx === messages.length - 1 && (
                                                     <button
                                                         onClick={handleEditLastMessage}
-                                                        className="mb-1 p-1 text-xs text-stone-400 hover:text-orange-600 transition-colors"
-                                                        title="Chỉnh sửa"
+                                                        className="mt-1 p-2 rounded-full bg-orange-100 text-orange-600 hover:bg-orange-200 transition-all shadow-sm flex items-center gap-1 group"
+                                                        title="Dừng và Sửa"
                                                     >
-                                                        Sửa
+                                                        <X className="w-3 h-3" />
+                                                        <span className="text-[10px] font-bold hidden group-hover:block">Dừng</span>
                                                     </button>
                                                 )}
 
-                                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${msg.role === 'user'
+                                                <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${msg.role === 'user'
                                                     ? 'bg-orange-500 text-white rounded-tr-none'
                                                     : 'bg-white border border-orange-100 text-stone-700 rounded-tl-none'
                                                     }`}>
