@@ -276,10 +276,10 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                     </div>
 
                                     {/* Chat Area */}
-                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth" ref={scrollRef}>
+                                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 scroll-smooth" ref={scrollRef}>
                                         {messages.map((msg, idx) => (
                                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'user'
+                                                <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${msg.role === 'user'
                                                     ? 'bg-orange-500 text-white rounded-tr-none'
                                                     : 'bg-white border border-orange-100 text-stone-700 rounded-tl-none'
                                                     }`}>
