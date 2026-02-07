@@ -19,7 +19,7 @@ interface OllamaResponse {
 }
 
 
-export async function askKimHuongAI(userQuestion: string): Promise<string> {
+export async function askKimHuongAI(userQuestion: string, signal?: AbortSignal): Promise<string> {
     try {
         console.log("⏳ Đang kết nối Supabase lấy giá mới nhất...");
 
@@ -81,6 +81,7 @@ ${productListText}
             headers: {
                 "Content-Type": "application/json",
             },
+            signal,
             body: JSON.stringify({
                 prompt: userQuestion,
                 system: DYNAMIC_SYSTEM_PROMPT,

@@ -82,6 +82,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     const [sessionId, setSessionId] = useState("");
     const supabase = createClient();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
 
     // Initialize Session ID & Load History
     useEffect(() => {
@@ -150,8 +151,12 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
         saveMessage("user", text);
 
+        // Create new AbortController
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         try {
-            const aiReply = await askKimHuongAI(text);
+            const aiReply = await askKimHuongAI(text, controller.signal);
             saveMessage("assistant", aiReply);
 
             let content = aiReply;
@@ -164,12 +169,45 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
             setMessages(prev => [...prev, { role: "assistant", content, action }]);
         } catch (error: any) {
+            if (error.name === 'AbortError') {
+                console.log("Chat aborted by user");
+                return;
+            }
             console.error("Chat error:", error);
             const errorMsg = "Dạ hiện tại em đang bị mất kết nối với 'Tổng đài'. Khách chờ xíu hoặc nhắn Zalo giúp em nha!";
             setMessages(prev => [...prev, { role: "assistant", content: errorMsg }]);
             saveMessage("assistant", errorMsg);
         } finally {
-            setIsLoading(false);
+            if (abortControllerRef.current === controller) {
+                setIsLoading(false);
+                abortControllerRef.current = null;
+            }
+        }
+    };
+
+    const handleEditLastMessage = () => {
+        // 1. Abort current request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+
+        // 2. Get last message (User's message)
+        const lastMsg = messages[messages.length - 1];
+        if (lastMsg && lastMsg.role === 'user') {
+            setInput(lastMsg.content); // Restore content to input
+            setMessages(prev => prev.slice(0, -1)); // Remove from history
+            setIsLoading(false); // Stop loading UI
+
+            // Focus textarea
+            setTimeout(() => {
+                if (textareaRef.current) {
+                    textareaRef.current.focus();
+                    // Resize textarea to fit content
+                    textareaRef.current.style.height = "auto";
+                    textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+                }
+            }, 0);
         }
     };
 
@@ -278,7 +316,18 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                     {/* Chat Area */}
                                     <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-4 scroll-smooth" ref={scrollRef}>
                                         {messages.map((msg, idx) => (
-                                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end items-end gap-2' : 'justify-start'}`}>
+                                                {/* Edit Button for User Message (Only for the last message & while loading) */}
+                                                {isLoading && msg.role === 'user' && idx === messages.length - 1 && (
+                                                    <button
+                                                        onClick={handleEditLastMessage}
+                                                        className="mb-1 p-1 text-xs text-stone-400 hover:text-orange-600 transition-colors"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        Sửa
+                                                    </button>
+                                                )}
+
                                                 <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm break-words ${msg.role === 'user'
                                                     ? 'bg-orange-500 text-white rounded-tr-none'
                                                     : 'bg-white border border-orange-100 text-stone-700 rounded-tl-none'
@@ -318,7 +367,7 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                                 <button
                                                     key={tag}
                                                     onClick={() => handleQuickAsk(tag)}
-                                                    className="px-3 py-1.5 bg-orange-50 text-orange-700 text-xs font-medium rounded-full border border-orange-100 whitespace-nowrap hover:bg-orange-100 transition-colors"
+                                                    className="px-3 py-1.5 bg-stone-100 text-stone-600 text-xs font-medium rounded-full border border-stone-200 whitespace-nowrap hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 transition-colors"
                                                 >
                                                     {tag}
                                                 </button>
@@ -339,9 +388,9 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                             </a>
                                         </div>
 
-                                        {/* Input Area */}
+                                        {/* Input Area - Simplified */}
                                         <div className="p-3 pt-1">
-                                            <div className="flex gap-2 items-end bg-stone-50 border border-stone-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-orange-500/50 focus-within:border-orange-500 transition-all">
+                                            <div className="flex gap-2 items-center bg-stone-100/50 rounded-2xl px-3 py-2">
                                                 <textarea
                                                     ref={textareaRef}
                                                     value={input}
@@ -349,13 +398,13 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                                     onKeyDown={handleKeyDown}
                                                     placeholder="Nhập câu hỏi... (Shift+Enter xuống dòng)"
                                                     rows={1}
-                                                    className="flex-1 bg-transparent border-none text-sm resize-none focus:ring-0 px-2 py-1 max-h-32 text-stone-800 placeholder-stone-400"
-                                                    style={{ minHeight: '24px' }}
+                                                    className="flex-1 bg-transparent border-none text-sm resize-none focus:ring-0 p-0 max-h-32 text-stone-800 placeholder-stone-400 leading-relaxed"
+                                                    style={{ minHeight: '20px' }}
                                                 />
                                                 <button
                                                     onClick={handleSend}
                                                     disabled={isLoading || !input.trim()}
-                                                    className="p-2 bg-orange-600 text-white rounded-xl shadow-sm hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+                                                    className="p-1.5 bg-orange-500 text-white rounded-full shadow-sm hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
                                                 >
                                                     <Send className="w-4 h-4" />
                                                 </button>
