@@ -19,18 +19,46 @@ interface OllamaResponse {
 }
 
 
-export async function askKimHuongAI(userQuestion: string, signal?: AbortSignal): Promise<string> {
-    try {
-        console.log("⏳ Đang kết nối Supabase lấy giá mới nhất...");
+// --- TỐI ƯU HIỆU SUẤT (CACHE & KEYWORD) ---
+const CACHE = new Map<string, string>();
+const QUICK_ANSWERS: Record<string, string> = {
+    "địa chỉ": "### ĐỊA CHỈ TIỆM NHÀ KIM HƯƠNG:\n- **246 Tân Hương, Tân Quý, Tân Phú, TP.HCM**\n- Mời bạn ghé xem trực tiếp nhé! (Mở cửa: 8h00 - 21h00) [SHOW_MAP]",
+    "ở đâu": "### ĐỊA CHỈ TIỆM NHÀ KIM HƯƠNG:\n- **246 Tân Hương, Tân Quý, Tân Phú, TP.HCM**\n- Mời bạn ghé xem trực tiếp nhé! (Mở cửa: 8h00 - 21h00) [SHOW_MAP]",
+    "số điện thoại": "### HOTLINE LIÊN HỆ:\n- **0938.123.456** (Có Zalo)\n- Bạn có thể gọi hoặc nhắn tin Zalo để được tư vấn nhanh nhất ạ!",
+    "hotline": "### HOTLINE LIÊN HỆ:\n- **0938.123.456** (Có Zalo)\n- Bạn có thể gọi hoặc nhắn tin Zalo để được tư vấn nhanh nhất ạ!",
+    "zalo": "### KẾT BẠN ZALO:\n- **0938.123.456** (Nhà Kim Hương)\n- Gửi ảnh mẫu qua Zalo để tiệm báo giá chi tiết nha!",
+    "ngân hàng": "### THÔNG TIN CHUYỂN KHOẢN:\n- **Vietcombank** - 9999888877 - NGUYEN VAN A\n- (Nội dung: Tên + SĐT)\n- Vui lòng xác nhận với Tiệm trước khi chuyển khoản nhé!",
+    "stk": "### THÔNG TIN CHUYỂN KHOẢN:\n- **Vietcombank** - 9999888877 - NGUYEN VAN A\n- (Nội dung: Tên + SĐT)\n- Vui lòng xác nhận với Tiệm trước khi chuyển khoản nhé!"
+};
 
-        // 1. LẤY DỮ LIỆU TỪ SUPABASE
+export async function askKimHuongAI(userQuestion: string, signal?: AbortSignal): Promise<string> {
+    const questionLower = userQuestion.toLowerCase();
+
+    // 1. KIỂM TRA TỪ KHÓA (Siêu tốc - Không tốn GPU)
+    for (const key in QUICK_ANSWERS) {
+        if (questionLower.includes(key)) {
+            console.log(`⚡ Trả lời nhanh từ khóa: "${key}"`);
+            return QUICK_ANSWERS[key]; // Trả về ngay lập tức
+        }
+    }
+
+    // 2. KIỂM TRA CACHE (Nếu câu hỏi lặp lại)
+    if (CACHE.has(questionLower)) {
+        console.log("♻️ Trả lời từ bộ nhớ đệm (Cache)");
+        return CACHE.get(questionLower)!;
+    }
+
+    try {
+        console.log("⏳ Đang kết nối 'Tổng đài' lấy giá mới nhất...");
+
+        // 3. LẤY DỮ LIỆU TỪ SUPABASE
         const supabase = createClient();
         const { data: products } = await supabase
             .from('products')
             .select('name, price, type')
             .eq('is_active', true);
 
-        // 2. TẠO DANH SÁCH SẢN PHẨM CHO AI
+        // 4. TẠO DANH SÁCH SẢN PHẨM CHO AI
         let productListText = "DANH SÁCH SẢN PHẨM & GIÁ (CẬP NHẬT REAL-TIME):\n";
 
         if (products && products.length > 0) {
@@ -47,7 +75,7 @@ export async function askKimHuongAI(userQuestion: string, signal?: AbortSignal):
             productListText += "(Hệ thống đang cập nhật kho...)";
         }
 
-        // 3. TẠO PROMPT ĐỘNG
+        // 5. TẠO PROMPT ĐỘNG
         const DYNAMIC_SYSTEM_PROMPT = `
 Bạn là Trợ lý ảo của tiệm 'Nhà Kim Hương'.
 Xưng hô: Xưng là **"Tiệm"** hoặc **"Nhà Kim Hương"**, gọi khách là **"Bạn"** hoặc **"Anh/Chị"**.
@@ -67,7 +95,7 @@ NHIỆM VỤ:
 1. **Tiêu đề**: Dùng ### để viết tiêu đề ngắn gọn.
 2. **Nội dung**:
     - Nếu tư vấn sản phẩm: Dùng gạch đầu dòng (-), in đậm **Tên** - **Giá**.
-    - Nếu khách đặt riêng: Nhắc về tính chất thủ công, thời gian đặt trước & nhắn Zalo.
+    - Nếu khách đặt riêng: Nhắc về độ thủ công, thời gian đặt trước & nhắn Zalo.
 3. **Phân cách**: Dùng --- để ngăn cách các phần.
 4. **Kết thúc**: Lời mời lịch sự (Ví dụ: "Mời bạn ghé tiệm xem mẫu nhé!").
 
@@ -105,6 +133,9 @@ ${productListText}
         // --- THUẬT TOÁN CẮT BỎ SUY NGHĨ (LOBOTOMY) ---
         // DeepSeek-R1 hay lảm nhảm trong thẻ <think>. Cần cắt bỏ để khách không thấy.
         const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+        // 6. LƯU VÀO CACHE (Để dùng lại lần sau)
+        CACHE.set(questionLower, cleanText);
 
         return cleanText;
 
