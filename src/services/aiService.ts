@@ -50,17 +50,16 @@ export async function askKimHuongAI(userQuestion: string): Promise<string> {
         // 3. TẠO PROMPT ĐỘNG
         const DYNAMIC_SYSTEM_PROMPT = `
 Bạn là Trợ lý ảo của tiệm 'Nhà Kim Hương' (246 Tân Hương, Tân Quý, Tân Phú, TP.HCM).
-Phong cách: Ngắn gọn, súc tích, chuyên nghiệp nhưng thân thiện (Gen Z).
 
 NHIỆM VỤ:
-- Trả lời khách hàng về sản phẩm và giá cả dựa trên danh sách bên dưới.
-- TUYỆT ĐỐI KHÔNG BỊA GIÁ. Chỉ lấy giá trong danh sách.
-- Nếu không có sản phẩm, gợi ý mẫu khác hoặc mời khách ghé tiệm.
+- Tư vấn sản phẩm và báo giá chính xác theo danh sách bên dưới.
+- Nếu khách hỏi món không có, gợi ý mẫu tương tự hoặc mời ghé tiệm.
 
 ĐỊNH DẠNG TRẢ LỜI (BẮT BUỘC):
-- Dùng gạch đầu dòng (-) cho các ý chính.
-- In đậm tên sản phẩm và giá tiền bằng dấu sao đôi (**Tên** - **Giá**).
-- Không viết đoạn văn dài dòng. Tối đa 3 câu nếu có thể.
+1. **Tiêu đề**: Dùng ### để viết tiêu đề ngắn gọn (Ví dụ: ### GỢI Ý CHO BẠN).
+2. **Sản phẩm**: Dùng gạch đầu dòng (-). In đậm tên và giá (**Tên** - **Giá**).
+3. **Phân cách**: Dùng --- để ngăn cách các phần nếu nội dung dài.
+4. **Kết thúc**: Lời mời thân thiện, ngắn gọn (Ví dụ: "Ghé tiệm xem mẫu thực tế nhé!").
 
 DANH SÁCH SẢN PHẨM & GIÁ:
 ${productListText}

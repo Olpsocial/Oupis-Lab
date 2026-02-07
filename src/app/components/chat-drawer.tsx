@@ -20,18 +20,29 @@ interface Message {
 // Helper Component to render basic Markdown (Bold & List)
 const MarkdownMessage = ({ content, role }: { content: string, role: "user" | "assistant" }) => {
     return (
-        <div className="space-y-1">
+        <div className="space-y-2">
             {content.split('\n').map((line, idx) => {
+                const trimmed = line.trim();
+
+                // Handle Headers (###)
+                if (trimmed.startsWith('###')) {
+                    return <h4 key={idx} className="font-bold text-brand-terracotta text-sm uppercase tracking-wide pt-2 pb-1">{trimmed.replace(/#/g, '').trim()}</h4>;
+                }
+
+                // Handle Separators (---)
+                if (trimmed === '---' || trimmed === '***') {
+                    return <div key={idx} className="border-t border-dashed border-orange-200 my-2"></div>;
+                }
+
                 // Check list item
-                const isList = line.trim().startsWith('-');
-                const cleanLine = isList ? line.trim().substring(1).trim() : line;
+                const isList = trimmed.startsWith('-');
+                const cleanLine = isList ? trimmed.substring(1).trim() : line;
 
                 // Parse bold: **text**
                 const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
 
                 const renderedParts = parts.map((part, pIdx) => {
                     if (part.startsWith('**') && part.endsWith('**')) {
-                        // Remove ** and wrap in strong
                         return <strong key={pIdx} className={role === 'assistant' ? "font-bold text-brand-brown" : "font-bold"}>{part.slice(2, -2)}</strong>;
                     }
                     return part;
@@ -46,7 +57,7 @@ const MarkdownMessage = ({ content, role }: { content: string, role: "user" | "a
                     );
                 }
 
-                if (!line.trim()) return <div key={idx} className="h-1"></div>;
+                if (!trimmed) return <div key={idx} className="h-1"></div>;
 
                 return <p key={idx} className="leading-relaxed text-sm">{renderedParts}</p>;
             })}
