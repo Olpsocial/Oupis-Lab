@@ -400,23 +400,23 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                             </a>
                                         </div>
 
-                                        {/* Input Area - Simplified */}
-                                        <div className="p-3 pt-1">
-                                            <div className="flex gap-2 items-center bg-stone-100/50 rounded-2xl px-3 py-2">
+                                        {/* Input Area - Clean & Frameless */}
+                                        <div className="p-3 pt-0">
+                                            <div className="flex gap-2 items-center bg-stone-100/40 rounded-2xl px-4 py-2.5 transition-all focus-within:bg-stone-100/60">
                                                 <textarea
                                                     ref={textareaRef}
                                                     value={input}
                                                     onChange={(e) => setInput(e.target.value)}
                                                     onKeyDown={handleKeyDown}
-                                                    placeholder="Nhập câu hỏi... (Shift+Enter xuống dòng)"
+                                                    placeholder="Nhập câu hỏi..."
                                                     rows={1}
-                                                    className="flex-1 bg-transparent border-none text-sm resize-none focus:ring-0 p-0 max-h-32 text-stone-800 placeholder-stone-400 leading-relaxed"
+                                                    className="flex-1 bg-transparent border-0 focus:ring-0 p-0 text-sm resize-none max-h-32 text-stone-800 placeholder-stone-400 leading-relaxed outline-none"
                                                     style={{ minHeight: '20px' }}
                                                 />
                                                 <button
                                                     onClick={handleSend}
                                                     disabled={isLoading || !input.trim()}
-                                                    className="p-1.5 bg-orange-500 text-white rounded-full shadow-sm hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
+                                                    className="p-1.5 bg-orange-500 text-white rounded-full shadow-sm hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0 active:scale-95"
                                                 >
                                                     <Send className="w-4 h-4" />
                                                 </button>
