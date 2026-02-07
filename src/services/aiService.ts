@@ -115,7 +115,8 @@ ${productListText}
                 system: DYNAMIC_SYSTEM_PROMPT,
                 options: {
                     temperature: 0.5, // Giảm độ sáng tạo để AI báo giá chuẩn hơn
-                    top_k: 40
+                    top_k: 40,
+                    num_predict: 300 // Giới hạn độ dài câu trả lời để giảm tải cho Dell 7750
                 }
             }),
         });
