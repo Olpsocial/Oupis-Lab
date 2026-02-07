@@ -1,9 +1,8 @@
 import { createClient } from '@/utils/supabase/client';
 
 // CẤU HÌNH KẾT NỐI (QUAN TRỌNG)
-// Thay cái link https://... bằng link Ngrok ông vừa có.
-// Ví dụ: "https://a1b2-14-161-22-111.ngrok-free.app"
-export const NGROK_URL = "https://leeann-nonoperatic-sherley.ngrok-free.dev";
+// Ưu tiên đọc từ biến môi trường (Vercel), nếu không có thì dùng link cứng (Local)
+export const NGROK_URL = process.env.NGROK_URL || "https://leeann-nonoperatic-sherley.ngrok-free.dev";
 
 interface OllamaResponse {
     model: string;
