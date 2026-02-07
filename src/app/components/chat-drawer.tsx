@@ -350,6 +350,16 @@ export default function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                                         {isLoading && (
                                             <div className="flex justify-start">
                                                 <div className="bg-white border border-orange-100 p-3 rounded-2xl rounded-tl-none shadow-sm flex gap-1 items-center">
+                                                    {/* Hiển thị 'đang load' nếu khách gửi nhiều tin liên tục (>=2) */}
+                                                    {(() => {
+                                                        let count = 0;
+                                                        for (let i = messages.length - 1; i >= 0; i--) {
+                                                            if (messages[i].role === 'user') count++;
+                                                            else break;
+                                                        }
+                                                        return count >= 2;
+                                                    })() && <span className="text-xs text-stone-400 mr-2 animate-pulse">... (đang load)</span>}
+
                                                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce" />
                                                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce delay-100" />
                                                     <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-bounce delay-200" />
