@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nha Kim Huong</string>
+    <string name="title_activity_main">Nha Kim Huong</string>
+    <string name="package_name">com.nhakimhuong.app</string>
+    <string name="custom_url_scheme">com.nhakimhuong.app</string>
+</resources>

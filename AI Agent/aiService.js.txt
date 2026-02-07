@@ -1,0 +1,51 @@
+// CẤU HÌNH KẾT NỐI (QUAN TRỌNG)
+// Thay cái link https://... bằng link Ngrok ông vừa có
+const NGROK_URL = " https://leeann-nonoperatic-sherley.ngrok-free.dev; 
+
+const SYSTEM_PROMPT = `
+Bạn là nhân viên tư vấn của tiệm 'Nhà Kim Hương'.
+Phong cách: Thân thiện, nhiệt tình, đậm chất miền Tây Nam Bộ.
+Sản phẩm: Bánh tráng phơi sương, muối nhuyễn, đồ ăn vặt, đồ trang trí Tết thủ công.
+Quy tắc: 
+1. Trả lời ngắn gọn (dưới 3 câu).
+2. Luôn gợi ý khách mua thêm combo để tiết kiệm.
+3. Nếu không biết thì xin lỗi khéo léo, đừng bịa đặt.
+`;
+
+export async function askKimHuongAI(userQuestion) {
+  try {
+    console.log("⏳ Đang gửi tín hiệu về Dell 7750...");
+
+    const response = await fetch(`${NGROK_URL}/api/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "deepseek-r1:8b", // Tên model phải khớp với Ollama
+        prompt: userQuestion,
+        system: SYSTEM_PROMPT,
+        stream: false, // Tắt stream để xử lý văn bản dễ hơn
+        options: {
+            temperature: 0.7, // Độ sáng tạo vừa phải
+            top_k: 40
+        }
+      }),
+    });
+
+    if (!response.ok) throw new Error("Lỗi kết nối Server nhà làm!");
+
+    const data = await response.json();
+    let rawText = data.response;
+
+    // --- THUẬT TOÁN CẮT BỎ SUY NGHĨ (LOBOTOMY) ---
+    // DeepSeek-R1 hay lảm nhảm trong thẻ <think>. Cần cắt bỏ để khách không thấy.
+    const cleanText = rawText.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+
+    return cleanText;
+
+  } catch (error) {
+    console.error("❌ Mất kết nối:", error);
+    return "Dạ hiện tại 'bộ não' của tiệm đang ngủ đông (Architect tắt máy rồi). Khách thông cảm nhắn tin qua Zalo nha!";
+  }
+}
